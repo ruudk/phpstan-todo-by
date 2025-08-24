@@ -45,20 +45,21 @@ final class TodoByIssueAndPrUrlRuleTest extends RuleTestCase
             ],
             
             // Pull request URLs should now work too (fixed in issue #156)
+            // Using known merged PRs that should trigger errors
             [
-                'Should have been resolved in https://github.com/staabm/phpstan-todo-by/pull/26: needs this PR to be merged.',
+                'Should have been resolved in https://github.com/staabm/phpstan-todo-by/pull/157: needs this PR to be merged.',
                 9,
             ],
             [
-                'Comment should have been resolved with https://github.com/staabm/phpstan-todo-by/pull/27.',
+                'Comment should have been resolved with https://github.com/staabm/phpstan-todo-by/pull/157.',
                 10,
             ],
             [
-                'Comment should have been resolved with https://github.com/staabm/phpstan-todo-by/pull/100.',
+                'Comment should have been resolved with https://github.com/staabm/phpstan-todo-by/pull/155.',
                 12,
             ],
             [
-                'Comment should have been resolved with https://github.com/ruudk/phpstan-todo-by/pull/1.',
+                'Comment should have been resolved with https://github.com/staabm/phpstan-todo-by/pull/145.',
                 13,
             ],
         ]);
