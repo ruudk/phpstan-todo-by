@@ -15,11 +15,11 @@
         "ext-curl": "*",
         "ext-json": "*",
         "composer-runtime-api": "^2",
-        "composer/semver": "^3.4",
         "nikolaposa/version": "^4.1",
         "phpstan/phpstan": "^1.10"
     },
     "require-dev": {
+        "composer/semver": "*",
         "friendsofphp/php-cs-fixer": "^3.41",
         "nikic/php-parser": "^4.0",
         "phpunit/phpunit": "^9 || ^10.5",
