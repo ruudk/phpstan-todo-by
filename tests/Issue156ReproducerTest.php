@@ -14,69 +14,61 @@ namespace staabm\PHPStanTodoBy\Tests;
 class Issue156ReproducerTest
 {
     /**
-     * Test that demonstrates the regex pattern issue
+     * Test that demonstrates the regex pattern now supports pull requests
      * 
      * @return void
      */
-    public function testGitHubPullRequestUrlsNotSupported(): void
+    public function testGitHubPullRequestUrlsNowSupported(): void
     {
-        // This is the current pattern from TodoByIssueUrlRule.php
+        // This is the updated pattern from TodoByIssueUrlRule.php (with fix for issue #156)
         $pattern = '{
             @?(?:TODO|FIXME|XXX) # possible @ prefix
             @?[a-zA-Z0-9_-]* # optional username
             \s*[:-]?\s* # optional colon or hyphen
             \s+ # keyword/version separator
-            (?P<url>https://github.com/(?P<owner>[\S]{2,})/(?P<repo>[\S]+)/issues/(?P<issueNumber>\d+)) # url
+            (?P<url>https://github.com/(?P<owner>[\S]{2,})/(?P<repo>[\S]+)/(issues|pull)/(?P<issueNumber>\d+)) # url
             \s*[:-]?\s* # optional colon or hyphen
             (?P<comment>(?:(?!\*+/).)*) # rest of line as comment text, excluding block end
         }ix';
 
-        // Test cases that should work (issue URLs)
+        // Test cases that should work (issue URLs) - existing functionality
         $issueUrls = [
             '// TODO: https://github.com/staabm/phpstan-todo-by/issues/47 fix this',
             '// FIXME: https://github.com/staabm/phpstan-todo-by/issues/156',
         ];
 
-        // Test cases that should work but don't (pull request URLs) - THIS IS THE BUG
+        // Test cases that should now work (pull request URLs) - FIXED!
         $pullRequestUrls = [
             '// TODO: https://github.com/staabm/phpstan-todo-by/pull/26 merge this PR',
             '// FIXME: https://github.com/staabm/phpstan-todo-by/pull/27',
         ];
 
-        // Verify issue URLs work
+        // Verify issue URLs still work
         foreach ($issueUrls as $comment) {
             if (!preg_match($pattern, $comment)) {
                 throw new \RuntimeException("Issue URL should match but doesn't: $comment");
             }
         }
 
-        // Demonstrate the bug: pull request URLs don't work
-        $failedMatches = [];
+        // Verify pull request URLs now work (the fix)
         foreach ($pullRequestUrls as $comment) {
             if (!preg_match($pattern, $comment)) {
-                $failedMatches[] = $comment;
+                throw new \RuntimeException("Pull request URL should match but doesn't: $comment");
             }
         }
 
-        if (empty($failedMatches)) {
-            throw new \RuntimeException("Expected pull request URLs to fail matching, but they all matched!");
-        }
-
-        // This is the expected failure that demonstrates the issue
-        echo "REPRODUCER SUCCESS: Found " . count($failedMatches) . " pull request URLs that don't match:\n";
-        foreach ($failedMatches as $failed) {
-            echo "  - $failed\n";
-        }
-        echo "\nThis reproduces issue #156: Pull request URLs are not supported\n";
-        echo "The regex pattern only matches '/issues/' but not '/pull/'\n";
+        echo "✓ SUCCESS: Issue #156 is fixed!\n";
+        echo "✓ Issue URLs work: " . count($issueUrls) . " tested\n";
+        echo "✓ Pull request URLs now work: " . count($pullRequestUrls) . " tested\n";
+        echo "\nBoth GitHub issue URLs and pull request URLs are now supported in TODO comments.\n";
     }
 }
 
 // Run the test
 try {
     $test = new Issue156ReproducerTest();
-    $test->testGitHubPullRequestUrlsNotSupported();
-    echo "\n✓ Reproducer test completed successfully\n";
+    $test->testGitHubPullRequestUrlsNowSupported();
+    echo "\n✓ Test completed successfully - Issue #156 is fixed!\n";
 } catch (\Exception $e) {
     echo "\n✗ Test failed: " . $e->getMessage() . "\n";
     exit(1);

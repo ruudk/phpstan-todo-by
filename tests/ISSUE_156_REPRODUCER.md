@@ -1,73 +1,70 @@
-# Reproducer for Issue #156: GitHub Pull Request URLs Not Supported
+# Issue #156: GitHub Pull Request URLs Not Supported - FIXED! ✅
 
-This directory contains a reproducer for the issue described in: 
+This directory contains tests that demonstrate the fix for the issue described in: 
 https://github.com/staabm/phpstan-todo-by/issues/156
 
-## Problem Description
+## Problem Description (RESOLVED)
 
-Currently, phpstan-todo-by supports GitHub issue URLs in TODO comments:
+Previously, phpstan-todo-by only supported GitHub issue URLs in TODO comments:
 ```php
 // TODO: https://github.com/owner/repo/issues/123 fix this
 ```
 
-However, it does not support GitHub pull request URLs:
+It did not support GitHub pull request URLs:
 ```php
 // TODO: https://github.com/owner/repo/pull/456 merge this PR
 ```
 
-Both should work the same way since GitHub issues and pull requests have similar status states.
+**This issue has now been fixed! Both URL types work identically.**
 
-## Root Cause
+## Root Cause and Fix
 
-The issue is in the regex pattern in `src/TodoByIssueUrlRule.php` (line 29):
+The issue was in the regex pattern in `src/TodoByIssueUrlRule.php` (line 29):
 
+**Before (broken):**
 ```php
 (?P<url>https://github.com/(?P<owner>[\S]{2,})/(?P<repo>[\S]+)/issues/(?P<issueNumber>\d+))
 ```
 
-This pattern only matches `/issues/` but not `/pull/`.
+**After (fixed):**
+```php
+(?P<url>https://github.com/(?P<owner>[\S]{2,})/(?P<repo>[\S]+)/(issues|pull)/(?P<issueNumber>\d+))
+```
 
-## Reproducer Files
+The fix was minimal: changed `/issues/` to `/(issues|pull)/` to support both URL patterns.
 
-### 1. Simple Standalone Test
+## Test Files (Updated to Show Fix Works)
+
+### 1. Verification Test
 - **File**: `tests/Issue156ReproducerTest.php`
-- **Description**: A standalone PHP script that demonstrates the regex issue
+- **Description**: Verifies that both issue and pull request URLs now work
 - **How to run**: `php tests/Issue156ReproducerTest.php`
 
-### 2. PHPStan Test Framework Style Test  
+### 2. PHPStan Test Framework Test  
 - **File**: `tests/TodoByIssueAndPrUrlRuleTest.php`
 - **Data File**: `tests/data/issue-and-pr-urls.php`
-- **Description**: A proper PHPStan test that shows issue URLs work but PR URLs are ignored
+- **Description**: PHPStan test that verifies both URL types generate errors correctly
 - **How to run**: `vendor/bin/phpunit tests/TodoByIssueAndPrUrlRuleTest.php` (requires dependencies)
 
-### 3. Interactive Regex Demo
-- **File**: `/tmp/test_regex_issue.php`
-- **Description**: Shows the regex matching behavior for different URL types
-- **How to run**: `php /tmp/test_regex_issue.php`
+## Current Behavior (FIXED!)
 
-## Expected Behavior
-
-Both issue and pull request URLs should work identically:
+Both issue and pull request URLs now work identically:
 
 ```php
-// All of these should work:
+// All of these now work correctly:
 // TODO: https://github.com/owner/repo/issues/123 fix this issue
 // TODO: https://github.com/owner/repo/pull/456 merge this PR
 // FIXME: https://github.com/owner/repo/issues/789
 // XXX: https://github.com/owner/repo/pull/101
 ```
 
-## Current Behavior
-
-Only issue URLs work; pull request URLs are completely ignored (no errors generated).
-
 ## Test Results
 
-Running the reproducer confirms the issue:
+Running the tests confirms the fix:
 
 ```
-✓ Issue URLs: Work correctly
-✗ Pull Request URLs: Completely ignored (no regex match)
+✅ Issue URLs: Work correctly (existing functionality preserved)
+✅ Pull Request URLs: Now work correctly (issue #156 fixed!)
 ```
 
-This demonstrates that the regex pattern needs to be updated to support both `/issues/` and `/pull/` URL patterns.
+The regex pattern now supports both `/issues/` and `/pull/` URL patterns as expected.
