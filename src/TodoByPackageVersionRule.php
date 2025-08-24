@@ -51,11 +51,6 @@ final class TodoByPackageVersionRule implements Rule
     private string $workingDirectory;
 
     /**
-     * @var null|string|RuleError
-     */
-    private $phpPlatformVersion;
-
-    /**
      * @var array<string, string>
      */
     private array $virtualPackages;
@@ -142,13 +137,10 @@ final class TodoByPackageVersionRule implements Rule
      */
     private function satisfiesPhpPlatformPackage(string $package, string $version, Comment $comment, int $wholeMatchStartOffset)
     {
-        $phpPlatformVersion = $this->readPhpPlatformVersion($comment, $wholeMatchStartOffset);
-        if ($phpPlatformVersion instanceof RuleError) {
-            return $phpPlatformVersion;
-        }
-
         $versionParser = new VersionParser();
-        $provided = $versionParser->parseConstraints($phpPlatformVersion);
+        
+        // Use current runtime PHP version instead of composer.json constraint
+        $provided = $versionParser->parseConstraints(PHP_VERSION);
 
         try {
             $constraint = $versionParser->parseConstraints($version);
@@ -198,52 +190,6 @@ final class TodoByPackageVersionRule implements Rule
         }
 
         return $provided->matches($constraint);
-    }
-
-    /**
-     * @return RuleError|string
-     */
-    private function readPhpPlatformVersion(Comment $comment, int $wholeMatchStartOffset)
-    {
-        if (null !== $this->phpPlatformVersion) {
-            return $this->phpPlatformVersion;
-        }
-
-        /** @phpstan-ignore-next-line missing bc promise */
-        $config = ComposerHelper::getComposerConfig($this->workingDirectory);
-
-        // fallback to current working directory
-        if (null === $config) {
-            /** @phpstan-ignore-next-line missing bc promise */
-            $config = ComposerHelper::getComposerConfig(getcwd());
-        }
-
-        if (null === $config) {
-            return $this->phpPlatformVersion = $this->errorBuilder->buildError(
-                $comment,
-                'Unable to find composer.json in '. $this->workingDirectory,
-                self::ERROR_IDENTIFIER,
-                null,
-                $wholeMatchStartOffset
-            );
-        }
-
-        if (
-            !isset($config['require'])
-            || !is_array($config['require'])
-            || !isset($config['require']['php'])
-            || !is_string($config['require']['php'])
-        ) {
-            return $this->phpPlatformVersion = $this->errorBuilder->buildError(
-                $comment,
-                'Missing php platform requirement in '. $this->workingDirectory .'/composer.json',
-                self::ERROR_IDENTIFIER,
-                null,
-                $wholeMatchStartOffset
-            );
-        }
-
-        return $this->phpPlatformVersion = $config['require']['php'];
     }
 
     /**
