@@ -145,4 +145,50 @@ final class TodoByPackageVersionRuleTest extends RuleTestCase
             ],
         ]);
     }
+
+    /**
+     * Test for issue #160: https://github.com/staabm/phpstan-todo-by/issues/160
+     * 
+     * BUG REPRODUCTION: This test documents the current buggy behavior.
+     * When running on PHP 8.3, `// TODO php:8.5` incorrectly triggers an error
+     * because the rule checks composer.json requirements instead of runtime PHP version.
+     * 
+     * Current composer.json has: "php": "^7.4 || ^8.0"
+     * Since ^8.0 allows versions up to 8.x, the rule incorrectly thinks php:8.5 is satisfied.
+     * But the runtime PHP version is 8.3.6, which does NOT satisfy >=8.5.
+     * 
+     * This test expects the CURRENT (buggy) behavior to demonstrate the issue.
+     */
+    public function testIssue160PhpVersionBug(): void
+    {
+        // IMPORTANT: This test expects the CURRENT BUGGY BEHAVIOR
+        // When the bug is fixed, this test should be updated to expect only:
+        // - php:7.4 and php:8.0 errors (correct, since 8.3 >= 7.4 and 8.3 >= 8.0)
+        // - NO errors for php:8.5, php:8.6, php:9.0 (correct, since 8.3 < 8.5)
+        
+        $this->analyse([__DIR__ . '/data/issue160.php'], [
+            // Current buggy behavior: ALL of these trigger errors
+            [
+                '"php" version requirement ">=8.5" satisfied: This should NOT trigger an error when running on PHP 8.4 or lower.',
+                5,
+            ],
+            [
+                '"php" version requirement ">=8.6" satisfied: This should also NOT trigger when on PHP 8.4.',
+                6,
+            ],
+            [
+                '"php" version requirement ">=9.0" satisfied: Future PHP version should not trigger.',
+                7,
+            ],
+            [
+                '"php" version requirement ">=7.4" satisfied: This should trigger on PHP 8.3+ (current version is higher).',
+                8,
+            ],
+            [
+                '"php" version requirement ">=8.0" satisfied: This should trigger on PHP 8.3+ (current version is higher).',
+                9,
+            ],
+            // php:8.3 behavior depends on exact version handling, so omit for now
+        ]);
+    }
 }
